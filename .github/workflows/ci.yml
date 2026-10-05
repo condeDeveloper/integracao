@@ -47,3 +47,6 @@ jobs:
 
       - name: o pico estreito e a raiz de x
         run: dotnet run --project ferramentas/Medidor/Medidor.csproj -c Release -- dificeis
+
+      - name: a estimativa de erro que a propria conta calcula
+        run: dotnet run --project ferramentas/Medidor/Medidor.csproj -c Release -- erro
