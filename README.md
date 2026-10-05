@@ -113,6 +113,34 @@ erro abaixo de um milionésimo para todas as regras numa função lisa, e o trap
 no seno dá 1,6 milionésimos: ele passa raspando de uma exigência que Simpson
 supera por um fator de um milhão, com as mesmas mil avaliações.
 
+## Saber que a resposta está certa sem conhecer a resposta
+
+Todas as regras acima devolvem um número e nada mais. Num problema de verdade a
+integral certa não é conhecida, e dizer "o erro é 2,8e-14" não é uma opção: é
+preciso **estimar** o erro a partir da própria conta.
+
+```
+$ dotnet medidor.dll erro
+
+funcao                   erro estimado     erro real   honesta     exagero
+exp(x) de 0 a 1               2.2E-016      0.0E+000       sim    Infinity
+sen(x) de 0 a pi              1.8E-012      2.2E-016       sim    8.1E+003
+pico estreito em 0,5          1.1E-001      7.3E-002       sim    1.5E+000
+raiz de x, de 0 a 1           2.2E-004      2.8E-005       sim    7.9E+000
+```
+
+A coluna da honestidade é a única que importa. Uma estimativa que **subestima** é
+pior que nenhuma, porque faz o programa parar de dividir o intervalo achando que
+já chegou; exagerar é só caro.
+
+E ela exagera bastante, de uma vez e meia a oito mil vezes. O motivo é simples: a
+diferença entre as duas regras é dominada pelo erro da **pior**, que é muito maior
+que o da melhor, e é a melhor que vira resposta.
+
+Os erros dos pedaços são somados em **módulo** e não com sinal. Somar com sinal
+deixaria os erros se cancelarem e produziria uma estimativa otimista demais, que é
+o pior defeito possível numa estimativa de erro.
+
 ## As peças
 
 | arquivo | o que faz |
@@ -121,6 +149,7 @@ supera por um fator de um milhão, com as mesmas mil avaliações.
 | `Regras.cs` | ponto médio, trapézio, Simpson, 3/8 e Boole, com o grau medido |
 | `Gauss.cs` | os nós de Legendre por Newton, e a regra composta |
 | `Romberg.cs` | a extrapolação, a adaptativa e os casos de teste |
+| `Kronrod.cs` | a estimativa de erro que a própria conta calcula |
 
 ## Como rodar
 
@@ -129,7 +158,8 @@ dotnet test testes/Integracao.Testes/Integracao.Testes.csproj -c Release
 dotnet run --project ferramentas/Medidor/Medidor.csproj -c Release -- tudo
 ```
 
-As medidas aceitam `grau`, `gauss`, `romberg`, `adaptativa`, `dificeis` e `tudo`.
+As medidas aceitam `grau`, `gauss`, `romberg`, `adaptativa`, `dificeis`, `erro` e
+`tudo`.
 
 ## Licença
 
