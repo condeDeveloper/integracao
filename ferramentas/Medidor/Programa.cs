@@ -18,9 +18,12 @@ public static class Programa
             case "romberg": Rombergs(); break;
             case "adaptativa": Adaptativas(); break;
             case "dificeis": Dificeis(); break;
-            case "tudo": Grau(); GaussContraCotes(); Rombergs(); Adaptativas(); Dificeis(); break;
+            case "erro": Estimativa(); break;
+            case "tudo":
+                Grau(); GaussContraCotes(); Rombergs(); Adaptativas(); Dificeis(); Estimativa();
+                break;
             default:
-                Console.Error.WriteLine("medidas: grau, gauss, romberg, adaptativa, dificeis, tudo");
+                Console.Error.WriteLine("medidas: grau, gauss, romberg, adaptativa, dificeis, erro, tudo");
                 return 1;
         }
         return 0;
@@ -163,6 +166,56 @@ public static class Programa
         Console.WriteLine();
     }
 
+    /// <summary>A estimativa de erro que a propria conta calcula.</summary>
+    private static void Estimativa()
+    {
+        Console.WriteLine("== saber que a resposta esta certa sem conhecer a resposta ==");
+        Console.WriteLine($"{"funcao",-22}{"erro estimado",16}{"erro real",14}{"honesta",10}{"exagero",12}");
+
+        foreach (var (nome, f, de, ate, certo) in Casos.Todos())
+        {
+            var estimativa = Kronrod.Estimar(f, de, ate);
+            Console.WriteLine($"{nome,-22}{estimativa.ErroEstimado,16:E1}" +
+                              $"{Math.Abs(estimativa.Valor - certo),14:E1}" +
+                              $"{(Kronrod.Honesta(estimativa, certo) ? "sim" : "NAO"),10}" +
+                              $"{Kronrod.Exagero(estimativa, certo),12:E1}");
+        }
+
+        Console.WriteLine();
+        Console.WriteLine("num problema de verdade a integral certa nao e conhecida, e dizer que o");
+        Console.WriteLine("erro e 2,8e-14 nao e uma opcao: e preciso ESTIMAR o erro a partir da");
+        Console.WriteLine("propria conta. A maneira usual e rodar duas regras de ordens diferentes e");
+        Console.WriteLine("usar a diferenca entre elas");
+        Console.WriteLine();
+        Console.WriteLine("a coluna da honestidade e a unica que importa: uma estimativa que");
+        Console.WriteLine("SUBESTIMA e pior que nenhuma, porque faz o programa parar de dividir o");
+        Console.WriteLine("intervalo achando que ja chegou. Exagerar e so caro");
+        Console.WriteLine();
+        Console.WriteLine("e ela exagera bastante, de uma vez e meia a oito mil vezes. O motivo e");
+        Console.WriteLine("simples: a diferenca entre as duas regras e dominada pelo erro da PIOR,");
+        Console.WriteLine("que e muito maior que o da melhor, e e a melhor que vira resposta");
+        Console.WriteLine();
+
+        Console.WriteLine("  e em pedacos, que e como ela e usada de verdade:");
+        Console.WriteLine($"  {"funcao",-22}{"pedacos",9}{"estimado",13}{"real",13}{"avaliacoes",13}");
+
+        foreach (var (nome, f, de, ate, certo) in Casos.Todos())
+        {
+            foreach (var pedacos in new[] { 1, 16, 64 })
+            {
+                var estimativa = Kronrod.Composta(f, de, ate, pedacos);
+                Console.WriteLine($"  {(pedacos == 1 ? nome : ""),-22}{pedacos,9}" +
+                                  $"{estimativa.ErroEstimado,13:E1}{Math.Abs(estimativa.Valor - certo),13:E1}" +
+                                  $"{estimativa.Avaliacoes,13:N0}");
+            }
+            Console.WriteLine();
+        }
+
+        Console.WriteLine("  os erros dos pedacos sao somados em MODULO e nao com sinal. Somar com");
+        Console.WriteLine("  sinal deixaria os erros se cancelarem e produziria uma estimativa");
+        Console.WriteLine("  otimista demais, que e o pior defeito possivel numa estimativa de erro");
+        Console.WriteLine();
+    }
     /// <summary>As funcoes em que as regras fixas sofrem.</summary>
     private static void Dificeis()
     {
