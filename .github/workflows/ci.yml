@@ -1,0 +1,49 @@
+name: testes
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  testes:
+    runs-on: ${{ matrix.so }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        so: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      # A pergunta central e "esta regra e exata ate que grau?", e ela so tem
+      # resposta com uma integral que nao erra nada. Por isso o juiz e a
+      # integral EXATA de polinomios, em fracao de inteiro grande: em ponto
+      # flutuante "zero" e um numero perto de zero, e ninguem sabe se o metodo
+      # errou ou se o arredondamento errou.
+      #
+      # Com a integral exata a resposta e binaria, e ela confirma os dois
+      # numeros que surpreendem: a regra de Simpson ajusta uma PARABOLA e e
+      # exata ate grau TRES, e a de Gauss com n pontos e exata ate grau 2n-1.
+      - name: testes
+        run: dotnet test testes/Integracao.Testes/Integracao.Testes.csproj -c Release --nologo -v q
+
+      - name: o grau de exatidao de cada regra
+        run: dotnet run --project ferramentas/Medidor/Medidor.csproj -c Release -- grau
+
+      - name: Gauss e Legendre contra Newton e Cotes
+        run: dotnet run --project ferramentas/Medidor/Medidor.csproj -c Release -- gauss
+
+      - name: a tabela de Romberg
+        run: dotnet run --project ferramentas/Medidor/Medidor.csproj -c Release -- romberg
+
+      - name: a quadratura adaptativa
+        run: dotnet run --project ferramentas/Medidor/Medidor.csproj -c Release -- adaptativa
+
+      - name: o pico estreito e a raiz de x
+        run: dotnet run --project ferramentas/Medidor/Medidor.csproj -c Release -- dificeis
